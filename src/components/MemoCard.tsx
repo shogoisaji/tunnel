@@ -9,7 +9,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Memo } from '../types/memo';
 import { getContrastColor } from '../utils/colors';
-import * as Haptics from 'expo-haptics';
 
 interface MemoCardProps {
   memo: Memo;
@@ -30,12 +29,10 @@ export const MemoCard: React.FC<MemoCardProps> = ({
   const textColor = getContrastColor(memo.color);
 
   const handlePin = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onPin();
   };
 
   const handleDelete = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     onDelete();
   };
 
@@ -74,28 +71,6 @@ export const MemoCard: React.FC<MemoCardProps> = ({
         {memo.content}
       </Text>
 
-      {memo.tags.length > 0 && (
-        <View style={styles.tagsContainer}>
-          {memo.tags.slice(0, 2).map((tag, index) => (
-            <View
-              key={index}
-              style={[
-                styles.tag,
-                { backgroundColor: `${textColor}20`, borderColor: `${textColor}40` }
-              ]}
-            >
-              <Text style={[styles.tagText, { color: textColor }]}>
-                #{tag}
-              </Text>
-            </View>
-          ))}
-          {memo.tags.length > 2 && (
-            <Text style={[styles.moreTagsText, { color: textColor }]}>
-              +{memo.tags.length - 2}
-            </Text>
-          )}
-        </View>
-      )}
 
       <Text style={[styles.date, { color: `${textColor}80` }]}>
         {memo.updatedAt.toLocaleDateString('ja-JP', {
@@ -147,28 +122,6 @@ const styles = StyleSheet.create({
     lineHeight: 18,
     flex: 1,
     marginBottom: 8,
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginBottom: 8,
-    alignItems: 'center',
-  },
-  tag: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    marginRight: 6,
-    marginBottom: 4,
-  },
-  tagText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  moreTagsText: {
-    fontSize: 12,
-    fontWeight: '500',
   },
   date: {
     fontSize: 12,

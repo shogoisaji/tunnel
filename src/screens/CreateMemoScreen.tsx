@@ -13,21 +13,18 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useMemoStore } from '../store/memoStore';
+import { useMemos } from '../context/MemoContext';
 import { getRandomColor, MEMO_COLORS } from '../utils/colors';
-import * as Haptics from 'expo-haptics';
 
 interface CreateMemoScreenProps {
   navigation: any;
 }
 
 export const CreateMemoScreen: React.FC<CreateMemoScreenProps> = ({ navigation }) => {
-  const { addMemo } = useMemoStore();
+  const { addMemo } = useMemos();
   
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [tags, setTags] = useState<string[]>([]);
-  const [tagInput, setTagInput] = useState('');
   const [selectedColor, setSelectedColor] = useState(getRandomColor());
 
   const handleSave = () => {
@@ -39,32 +36,15 @@ export const CreateMemoScreen: React.FC<CreateMemoScreenProps> = ({ navigation }
     addMemo({
       title: title.trim(),
       content: content.trim(),
-      tags,
       color: selectedColor,
       isPinned: false,
     });
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     navigation.goBack();
-  };
-
-  const handleAddTag = () => {
-    const trimmedTag = tagInput.trim();
-    if (trimmedTag && !tags.includes(trimmedTag)) {
-      setTags([...tags, trimmedTag]);
-      setTagInput('');
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const handleColorSelect = (color: string) => {
     setSelectedColor(color);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   return (
@@ -109,37 +89,6 @@ export const CreateMemoScreen: React.FC<CreateMemoScreenProps> = ({ navigation }
             />
           </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>タグ</Text>
-            <View style={styles.tagInputContainer}>
-              <TextInput
-                style={styles.tagInput}
-                placeholder="タグを追加..."
-                value={tagInput}
-                onChangeText={setTagInput}
-                onSubmitEditing={handleAddTag}
-                returnKeyType="done"
-              />
-              <TouchableOpacity onPress={handleAddTag} style={styles.addTagButton}>
-                <Ionicons name="add" size={20} color="#007AFF" />
-              </TouchableOpacity>
-            </View>
-            
-            {tags.length > 0 && (
-              <View style={styles.tagsContainer}>
-                {tags.map((tag, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.tag}
-                    onPress={() => handleRemoveTag(tag)}
-                  >
-                    <Text style={styles.tagText}>#{tag}</Text>
-                    <Ionicons name="close" size={16} color="#666" />
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>カラー</Text>
@@ -171,15 +120,6 @@ export const CreateMemoScreen: React.FC<CreateMemoScreenProps> = ({ navigation }
               <Text style={styles.previewContent}>
                 {content || 'メモの内容がここに表示されます...'}
               </Text>
-              {tags.length > 0 && (
-                <View style={styles.previewTags}>
-                  {tags.slice(0, 3).map((tag, index) => (
-                    <Text key={index} style={styles.previewTag}>
-                      #{tag}
-                    </Text>
-                  ))}
-                </View>
-              )}
             </View>
           </View>
         </ScrollView>
@@ -254,48 +194,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     minHeight: 120,
   },
-  tagInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  tagInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
-    marginRight: 12,
-  },
-  addTagButton: {
-    padding: 12,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#007AFF',
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 12,
-  },
-  tag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#e9ecef',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  tagText: {
-    fontSize: 14,
-    color: '#333',
-    marginRight: 6,
-  },
   colorContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -334,15 +232,5 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: '#333',
     marginBottom: 12,
-  },
-  previewTags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  previewTag: {
-    fontSize: 12,
-    color: '#666',
-    marginRight: 8,
-    marginBottom: 4,
   },
 });

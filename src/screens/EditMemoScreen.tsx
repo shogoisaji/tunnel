@@ -13,9 +13,8 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useMemoStore } from '../store/memoStore';
+import { useMemos } from '../context/MemoContext';
 import { MEMO_COLORS } from '../utils/colors';
-import * as Haptics from 'expo-haptics';
 
 interface EditMemoScreenProps {
   navigation: any;
@@ -24,14 +23,12 @@ interface EditMemoScreenProps {
 
 export const EditMemoScreen: React.FC<EditMemoScreenProps> = ({ navigation, route }) => {
   const { memoId } = route.params;
-  const { memos, updateMemo, deleteMemo } = useMemoStore();
+  const { memos, updateMemo, deleteMemo } = useMemos();
   
   const memo = memos.find(m => m.id === memoId);
   
   const [title, setTitle] = useState(memo?.title || '');
   const [content, setContent] = useState(memo?.content || '');
-  const [tags, setTags] = useState<string[]>(memo?.tags || []);
-  const [tagInput, setTagInput] = useState('');
   const [selectedColor, setSelectedColor] = useState(memo?.color || MEMO_COLORS[0]);
 
   useEffect(() => {
@@ -55,11 +52,8 @@ export const EditMemoScreen: React.FC<EditMemoScreenProps> = ({ navigation, rout
     updateMemo(memoId, {
       title: title.trim(),
       content: content.trim(),
-      tags,
       color: selectedColor,
     });
-
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     navigation.goBack();
   };
 
@@ -81,28 +75,12 @@ export const EditMemoScreen: React.FC<EditMemoScreenProps> = ({ navigation, rout
     );
   };
 
-  const handleAddTag = () => {
-    const trimmedTag = tagInput.trim();
-    if (trimmedTag && !tags.includes(trimmedTag)) {
-      setTags([...tags, trimmedTag]);
-      setTagInput('');
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-  };
-
-  const handleRemoveTag = (tagToRemove: string) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  };
-
   const handleColorSelect = (color: string) => {
     setSelectedColor(color);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   const togglePin = () => {
     updateMemo(memoId, { isPinned: !memo.isPinned });
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
   return (
@@ -180,37 +158,6 @@ export const EditMemoScreen: React.FC<EditMemoScreenProps> = ({ navigation, rout
             />
           </View>
 
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>タグ</Text>
-            <View style={styles.tagInputContainer}>
-              <TextInput
-                style={styles.tagInput}
-                placeholder="タグを追加..."
-                value={tagInput}
-                onChangeText={setTagInput}
-                onSubmitEditing={handleAddTag}
-                returnKeyType="done"
-              />
-              <TouchableOpacity onPress={handleAddTag} style={styles.addTagButton}>
-                <Ionicons name="add" size={20} color="#007AFF" />
-              </TouchableOpacity>
-            </View>
-            
-            {tags.length > 0 && (
-              <View style={styles.tagsContainer}>
-                {tags.map((tag, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.tag}
-                    onPress={() => handleRemoveTag(tag)}
-                  >
-                    <Text style={styles.tagText}>#{tag}</Text>
-                    <Ionicons name="close" size={16} color="#666" />
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>カラー</Text>
@@ -242,15 +189,6 @@ export const EditMemoScreen: React.FC<EditMemoScreenProps> = ({ navigation, rout
               <Text style={styles.previewContent}>
                 {content || 'メモの内容がここに表示されます...'}
               </Text>
-              {tags.length > 0 && (
-                <View style={styles.previewTags}>
-                  {tags.slice(0, 3).map((tag, index) => (
-                    <Text key={index} style={styles.previewTag}>
-                      #{tag}
-                    </Text>
-                  ))}
-                </View>
-              )}
             </View>
           </View>
         </ScrollView>
@@ -347,48 +285,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     minHeight: 120,
   },
-  tagInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  tagInput: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
-    marginRight: 12,
-  },
-  addTagButton: {
-    padding: 12,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#007AFF',
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 12,
-  },
-  tag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#e9ecef',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
-    marginBottom: 8,
-  },
-  tagText: {
-    fontSize: 14,
-    color: '#333',
-    marginRight: 6,
-  },
   colorContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -427,15 +323,5 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     color: '#333',
     marginBottom: 12,
-  },
-  previewTags: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
-  previewTag: {
-    fontSize: 12,
-    color: '#666',
-    marginRight: 8,
-    marginBottom: 4,
   },
 });

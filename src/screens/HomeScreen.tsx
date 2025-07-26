@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,9 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useMemoStore, loadMemosFromDatabase } from '../store/memoStore';
-import { MemoCard } from '../components/MemoCard';
-import { initDatabase } from '../database/database';
-import * as Haptics from 'expo-haptics';
+import { Memo } from '../types/memo';
+import { useMemos } from '../context/MemoContext';
+import { getContrastColor } from '../utils/colors';
 
 interface HomeScreenProps {
   navigation: any;
@@ -27,19 +26,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
     setSearchQuery,
     deleteMemo,
     togglePin,
-  } = useMemoStore();
+  } = useMemos();
 
   const [isSearchVisible, setIsSearchVisible] = useState(false);
 
-  useEffect(() => {
-    initDatabase();
-    loadMemosFromDatabase();
-  }, []);
-
   const filteredMemos = memos.filter(memo =>
     memo.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    memo.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    memo.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+    memo.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleDeleteMemo = (id: string, title: string) => {
@@ -58,7 +51,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   };
 
   const handleCreateMemo = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     navigation.navigate('CreateMemo');
   };
 
@@ -67,16 +59,57 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({ navigation }) => {
   };
 
   const toggleSearch = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setIsSearchVisible(!isSearchVisible);
     if (isSearchVisible) {
       setSearchQuery('');
     }
   };
 
-  const renderMemoCard = ({ item, index }: { item: any; index: number }) => (
+  const SimpleMemoCard = ({ memo, onPress, onPin, onDelete }: {
+    memo: Memo;
+    onPress: () => void;
+    onPin: () => void;
+    onDelete: () => void;
+  }) => {
+    const textColor = getContrastColor(memo.color);
+    
+    return (
+      <TouchableOpacity
+        style={[styles.memoCard, { backgroundColor: memo.color }]}
+        onPress={onPress}
+        activeOpacity={0.8}
+      >
+        <View style={styles.cardHeader}>
+          <TouchableOpacity onPress={onPin} style={styles.pinButton}>
+            <Ionicons
+              name={memo.isPinned ? "bookmark" : "bookmark-outline"}
+              size={20}
+              color={textColor}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onDelete} style={styles.deleteButton}>
+            <Ionicons name="trash-outline" size={18} color={textColor} />
+          </TouchableOpacity>
+        </View>
+        
+        <Text style={[styles.cardTitle, { color: textColor }]} numberOfLines={2}>
+          {memo.title || 'Untitled'}
+        </Text>
+        
+        <Text style={[styles.cardContent, { color: textColor }]} numberOfLines={4}>
+          {memo.content}
+        </Text>
+        
+        <Text style={[styles.cardDate, { color: textColor }]}>
+          {memo.updatedAt.toLocaleDateString('ja-JP')}
+        </Text>
+      </TouchableOpacity>
+    );
+  };
+
+  const renderMemoCard = ({ item, index }: { item: Memo; index: number }) => (
     <View style={index % 2 === 0 ? styles.leftCard : styles.rightCard}>
-      <MemoCard
+      <SimpleMemoCard
         memo={item}
         onPress={() => handleEditMemo(item.id)}
         onPin={() => togglePin(item.id)}
@@ -264,5 +297,47 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+  memoCard: {
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    minHeight: 120,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  pinButton: {
+    padding: 4,
+  },
+  deleteButton: {
+    padding: 4,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    lineHeight: 20,
+  },
+  cardContent: {
+    fontSize: 14,
+    lineHeight: 18,
+    marginBottom: 8,
+    opacity: 0.8,
+  },
+  cardDate: {
+    fontSize: 12,
+    opacity: 0.6,
+    marginTop: 'auto',
   },
 });
